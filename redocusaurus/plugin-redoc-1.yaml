@@ -16,23 +16,23 @@ info:
 
     <SecurityDefinitions />
   version: 1.0.0
-  title: Mockup API
+  title: Google Drive API
 tags:
-  - name: mockup
-    description: Everything about your Mockups
-  - name: mockup_model
-    x-displayName: The Mockup Model
+  - name: google_drive
+    description: Everything about your Google Drive Folders
+  - name: google_drive_model
+    x-displayName: The Google Drive Model
     description: |
       <SchemaDefinition schemaRef="#/components/schemas/Mockup" />
 x-tagGroups:
   - name: General
     tags:
-      - mockup
+      - google_drive
   - name: Models
     tags:
-      - mockup_model
+      - google_drive_model
 paths:
-  /mockup:
+  /google_drive/create:
     parameters:
       - name: Authorization
         in: header
@@ -54,10 +54,84 @@ paths:
           default: en-AU
     post:
       tags:
-        - mockup
-      summary: Add a new mockup to the presentation
-      description: Add new mockup to the presentation order.
-      operationId: addMockup
+        - google_drive
+      summary: Create clients folders in organizations Google Drive
+      description: Create clients folders in organizations Google Drive
+      operationId: createGoogleDriveFolders
+      responses:
+        '405':
+          description: Invalid input
+      security:
+        - mockuppresentation_auth:
+            - write:mockups
+            - read:mockups
+      x-codeSamples:
+        - lang: C#
+          source: >
+            MockupPresentation.v1.Mockup mockup = new
+            MockupPresentation.v1.Mockup();
+
+            mockup.setApiKey("your api key");
+
+            mockup.mockupType = MockupPresentation.v1.Mockup.TYPE_DOG;
+
+            mockup.name = "Rex";
+
+            // set other fields
+
+            MockupPresentationResponse response = mockup.create();
+
+            if (response.statusCode == HttpStatusCode.Created)
+
+            {
+              // Successfully created
+            }
+
+            else
+
+            {
+              // Something wrong -- check response for errors
+              Console.WriteLine(response.getRawResponse());
+            }
+        - lang: PHP
+          source: |
+            $form = new \MockupPresentation\Entities\Mockup();
+            $form->setMockupType("Dog");
+            $form->setName("Rex");
+            // set other fields
+            try {
+                $mockup = $client->mockups()->create($form);
+            } catch (UnprocessableEntityException $e) {
+                var_dump($e->getErrors());
+            }
+      requestBody:
+        $ref: '#/components/requestBodies/Mockup'
+  /google_drive/hierarchy:
+    parameters:
+      - name: Authorization
+        in: header
+        description: The JWT of frontegg user.
+        example: Bearer ey2349293994...
+        required: true
+        schema:
+          type: string
+          default: none
+      - name: Accept-Language
+        in: header
+        description: >-
+          The language you prefer for messages. Supported values are en-AU,
+          en-CA, en-GB, en-US
+        example: en-US
+        required: false
+        schema:
+          type: string
+          default: en-AU
+    post:
+      tags:
+        - google_drive
+      summary: Create clients folders in organizations Google Drive
+      description: Create clients folders in organizations Google Drive
+      operationId: createGoogleDriveHierarchy
       responses:
         '405':
           description: Invalid input
@@ -170,11 +244,9 @@ components:
     Mockup:
       type: object
       required:
-        - brand_id
-        - product_id
-        - area
-        - type
-        - side
+        - entity
+        - entity_type_id
+        - secondary_entity
       discriminator:
         propertyName: mockupType
         mapping:
@@ -189,54 +261,26 @@ components:
           description: Mockup ID
           allOf:
             - $ref: '#/components/schemas/Id'
-        brand_id:
-          description: PIM ID of brand, whose first brand_logo will be sent through as logo
-          type: integer
-          example: 123123123123
-        logo_id:
+        entity:
           description: >-
-            PIM ID of a brand_logo, whose versions will be used to brand a
-            product
-          type: integer
-          example: 123123123123
-        mockup_title:
+            Object containing the following properties - id, entity_type_id,
+            organization.id
+          type: object
+          example:
+            entity_type_id: 123123123123
+            id: 123123123123
+            organization:
+              id: 123123123123
+        secondary_entity:
           description: >-
-            The title of a mockup, will be used as filename of resultant mockup
-            and depending on template could be used in a header text.
-          type: string
-          example: Black 3001CVC Small For Postman
-        product_id:
-          description: >-
-            PIM ID of the product variant whose images will be used as
-            background
-          type: integer
-          example: 123123123123
-        name:
-          description: >-
-            Hex code of brand color, used in headers and other art, dependent on
-            template.  Hash character omitted in request.
-          type: string
-          example: EF34A8
-        area:
-          description: Imprint area where the logo version will be placed on product
-          type: string
-          example: right-chest
-        type:
-          description: >-
-            The type of product for which the Design Huddle tempalte is
-            designed.  Used to select appropriate template if no template_id
-            present in request body (used with side parameter)
-          type: string
-          example: shirt
-        side:
-          description: >-
-            The side of product.    Used to select appropriate template if no
-            template_id present in request body (along with type parameter).
-          type: string
-          example: shirt
-        mockupType:
-          description: Type of a mockup
-          type: string
+            Object containing the following properties - id, entity_type_id,
+            organization.id
+          type: object
+          example:
+            entity_type_id: 123123123123
+            id: 123123123123
+            organization:
+              id: 123123123123
       xml:
         name: Mockup
     Tag:
